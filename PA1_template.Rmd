@@ -1,25 +1,121 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "PeerOne"
+author: "liuxiangxiang"
+date: "Decmber 20, 2015"
+output: html_document
 ---
 
+##Loading and preprocessing the data
 
-## Loading and preprocessing the data
+1.load the data
+```{r load, echo=TRUE}
+download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip",destfile="~/Desktop/activity.zip")
+unzip("~/Desktop/activity.zip")
+datas<- read.csv("~/Desktop/activity.csv")
+```
 
+2.Process the data
+It dosn't need be processed.
 
+##What is mean total number of steps taken per day?
 
-## What is mean total number of steps taken per day?
+1.Calculate the total number of steps taken per day
+```{r calculate, echo=TRUE}
+datas<-read.csv(file = "~/Desktop/activity.csv")
+dates<-unique(datas$date)
+hist_data<-data.frame(date=dates, steps=0)
+for (d in dates){
+    hist_data[which(hist_data$date==d),]$steps=sum(subset(datas,date==d)$steps, na.rm=T)
+}
+head(hist_data)
+```
 
+2.histogram of the total number of steps taken each day
+```{r hist, echo=TRUE}
+datas<-read.csv(file = "~/Desktop/activity.csv")
+dates<-unique(datas$date)
+hist_data<-data.frame(date=dates, steps=0)
+for (d in dates){
+    hist_data[which(hist_data$date==d),]$steps=sum(subset(datas,date==d)$steps, na.rm=T)
+}
+hist(hist_data$steps, xlab="Intevals",col = "yellow",breaks=15)
+```
+3.Mean of the total number of steps per day is 9354.23, Median of the total number of steps per day is 10395
+```{r mean,echo=TRUE}
+datas<-read.csv(file = "~/Desktop/activity.csv")
+dates<-unique(datas$date)
+hist_data<-data.frame(date=dates, steps=0)
+for (d in dates){
+    hist_data[which(hist_data$date==d),]$steps=sum(subset(datas,date==d)$steps, na.rm=T)
+}
+print(mean(hist_data$steps))
+print(median(hist_data$steps))
+```
 
+##What is the average daily activity pattern?
+1.Series plot figure saved as 'line.png'
+```{r Series, echo=TRUE}
+datas<-read.csv(file = "~/Desktop/activity.csv")
+splitintevals<-split(datas,datas$interval)
+meansteps<-sapply(splitintevals,function(x){
+    mean(x[,"steps"],na.rm=T)
+})
+plot(names(meansteps),meansteps,type="l",
+     xlab="Intervals",ylab = "Meansteps",col="blue")
+```
 
-## What is the average daily activity pattern?
+2.Which 5-Mimute interval is max?835
+```{r max, echo=TRUE}
+datas<-read.csv(file = "~/Desktop/activity.csv",header = T)
+splitintevals<-split(datas,datas$interval)
+meansteps<-sapply(splitintevals,function(x){
+    mean(x[,"steps"],na.rm=T)
+})
+print(names(sort(meansteps,decreasing = TRUE)[1]))
+```
+As is you can see ,the answer is 835
 
+##Imputing missing values
+1.Total number of missing values is 2304
+```{r missing,echo=TRUE}
+datas<-read.csv(file = "~/Desktop/activity.csv",header = T)
+print(length(which(is.na(datas$steps))))
+```
+2.Strateges:I'll use the mean values of 5-minute interval,the detail codes see 3:
+first,on the base of the dayliy activity known,we should copy the orignal data and named "new1";
+second,we should find the index of is.na, then put the value of inteval into it.
 
+3.Fillied data saved as new1
+```{r new, echo=TRUE}
+datas<-read.csv(file = "~/Desktop/activity.csv",header = T)
+splitintevals<-split(datas,datas$interval)
+meansteps<-sapply(splitintevals,function(x){
+    mean(x[,"steps"],na.rm=T)
+})
+naIndex<-which(is.na(datas))
+new1<-datas
+for (id in naIndex){
+    new1[id,"steps"]<- meansteps[as.character(new1[id,"interval"])]
+}
+```
 
-## Imputing missing values
+4.Hist new1:There is little diffrece betwwen them
+```{r hist1, echo=TRUE}
+datas<-read.csv(file = "~/Desktop/activity.csv",header = T)
+splitintevals<-split(datas,datas$interval)
+meansteps<-sapply(splitintevals,function(x){
+    mean(x[,"steps"],na.rm=T)
+})
+naIndex<-which(is.na(datas))
+new1<-datas
+for (id in naIndex){
+    new1[id,"steps"]<- meansteps[as.character(new1[id,"interval"])]
+}
+splitdata<- split(new1,new1$date)
+totalsteps<- sapply(splitdata,function(x){sum(x[,"steps"])})
+hist(totalsteps, col = "yellow",breaks=15)
+print(mean(totalsteps))
+print(median(totalsteps))
+```
+As you can see ,the new1's mean and median are identical .Both of them is 10766.There are some diffrent from the orignal data.After the inputing,the mean and median are coverage to the same value.
 
-
-
-## Are there differences in activity patterns between weekdays and weekends?
